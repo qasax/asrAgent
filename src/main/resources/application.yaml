@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: asrAgent
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/asr_agent
+    username: root
+    password: 123456
+  session:
+    store-type: redis
+    # session 30 天过期
+    timeout: 2592000
+  data:
+    redis:
+      host: localhost
+      ttl: 3600
+      port: 6379
+      password:
+  ai:
+    dashscope:
+      api-key: sk-355fdaeddf5743078b7d4c9efde61980
+      chat:
+        options:
+          model: qwen-plus
+
+server:
+  port: 8123
+
+asr:
+  realtime:
+    model: qwen3-asr-flash-realtime
+    url: wss://dashscope.aliyuncs.com/api-ws/v1/realtime
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: my.asragent.controller
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
