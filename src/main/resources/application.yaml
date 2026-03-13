@@ -2,10 +2,22 @@ spring:
   application:
     name: asrAgent
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/asr_agent
-    username: root
-    password: 123456
+    url: jdbc:postgresql://localhost:5432/asr_agent
+    username: postgres
+    password: mysecret
+  ai:
+    dashscope:
+      api-key: sk-355fdaeddf5743078b7d4c9efde61980
+      chat:
+        options:
+          model: qwen-plus
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+      #  dimensions: 1536
+        distance-type: COSINE_DISTANCE
+        max-document-batch-size: 10000
+
   session:
     store-type: redis
     # session 30 天过期
@@ -16,13 +28,6 @@ spring:
       ttl: 3600
       port: 6379
       password:
-  ai:
-    dashscope:
-      api-key: sk-355fdaeddf5743078b7d4c9efde61980
-      chat:
-        options:
-          model: qwen-plus
-
 server:
   port: 8123
 
