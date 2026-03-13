@@ -24,6 +24,8 @@ public class DispAgent {
     private String quickTranslateSystemPrompt;
     @Value("classpath:/prompts/translate.st")
     private String translateSystemPrompt;
+    @Value("classpath:/prompts/summary.st")
+    private String summaryPrompt;
     /**
      * 预留的 Bean 注册入口。
      * <p>
@@ -58,6 +60,19 @@ public class DispAgent {
      */
     @Bean("translateAgent")
     public ReactAgent translateAgent() {
+        return ReactAgent.builder()
+                .name("translateAgent")
+                .model(analyseChatModel)
+                .systemPrompt(translateSystemPrompt)
+                .build();
+    }
+
+    /**
+     *
+     * 阶段总结agent
+     */
+    @Bean("summaryAgent")
+    public ReactAgent summaryAgent() {
         return ReactAgent.builder()
                 .name("translateAgent")
                 .model(analyseChatModel)

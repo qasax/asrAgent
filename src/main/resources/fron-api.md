@@ -1,4 +1,4 @@
-﻿# 鍚庣鎺ュ彛鏂囨。锛圵S 闊抽涓婁紶 + SSE 缁撴灉鎺ㄩ€侊級
+# 鍚庣鎺ュ彛鏂囨。锛圵S 闊抽涓婁紶 + SSE 缁撴灉鎺ㄩ€侊級
 
 ## 1. 鎬昏
 1. 涓婅閫氶亾锛歐ebSocket锛堜簩杩涘埗闊抽 + 鏂囨湰鎺у埗锛?
@@ -11,11 +11,11 @@
 
 ## 2. 閫氶亾鍦板潃
 1. WebSocket 闊抽涓婁紶锛歚ws://{host}/ws/audio`
-2. SSE 缁撴灉鎺ㄩ€侊細`http://{host}/sse/audio?sessionId={sessionId}`
+2. SSE 缁撴灉鎺ㄩ€侊細`http://{host}/sse/audio?translationRecordId={translationRecordId}`
 
 ## 3. 杩炴帴涓庢椂搴?
 1. 瀹㈡埛绔缓绔?WebSocket 杩炴帴
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -24,7 +24,7 @@
 
 ## 4. 闊抽鍙傛暟瑙勮寖
 1. 閲囨牱鐜囷細16000 Hz
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -43,7 +43,7 @@
 ```json
 {
   "type": "start",
-  "sessionId": "8f8f2d4a-9c55-4c52-8f08-1b7f76c6c001",
+  "translationRecordId": "8f8f2d4a-9c55-4c52-8f08-1b7f76c6c001",
   "sourceLang": "zh",
   "targetLang": "en",
   "audio": {
@@ -61,7 +61,7 @@
 
 瀛楁璇存槑锛?
 1. `type`锛氬浐瀹?`start`
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -79,13 +79,13 @@
 ```json
 {
   "type": "stop",
-  "sessionId": "8f8f2d4a-9c55-4c52-8f08-1b7f76c6c001"
+  "translationRecordId": "8f8f2d4a-9c55-4c52-8f08-1b7f76c6c001"
 }
 ```
 
 瀛楁璇存槑锛?
 1. `type`锛氬浐瀹?`stop`
-2. `sessionId`锛氬搴斿紑濮嬩細璇?
+2. `translationRecordId`锛氬搴斿紑濮嬩細璇?
 
 鏈嶅姟绔鐞嗭細
 1. 缁撴潫璇嗗埆
@@ -121,7 +121,7 @@
 
 绾︽潫锛?
 1. 涓嶅寘鍚?JSON
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -129,7 +129,7 @@
 ## 6. SSE锛堜笅琛岋級
 
 ### 6.1 SSE 杩炴帴
-URL锛歚http://{host}/sse/audio?sessionId={sessionId}`
+URL锛歚http://{host}/sse/audio?translationRecordId={translationRecordId}`
 
 鏈嶅姟绔搷搴斿ご寤鸿锛?
 1. `Content-Type: text/event-stream`
@@ -223,14 +223,14 @@ data: {"type":"partial","text":"浣犲ソ"}
 
 寤鸿閿欒鐮侊細
 1. `AUDIO_UNSUPPORTED`
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
 
 ## 9. 鏈嶅姟绔鐞嗘祦绋嬪缓璁?
 1. 鏀跺埌 `start` 鈫?鏍￠獙鍙傛暟 鈫?鍒濆鍖栦細璇濈姸鎬?
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -243,7 +243,7 @@ data: {"type":"partial","text":"浣犲ソ"}
 
 ## 11. 鏈€灏忓彲鐢ㄦ祦绋嬶紙MVP锛?
 1. 寤虹珛 WebSocket
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
@@ -251,11 +251,12 @@ data: {"type":"partial","text":"浣犲ソ"}
 
 ## 12. 绀轰緥浜や簰搴忓垪
 1. Client 鈫?WS: `start`
-2. `sessionId`：UUID，客户端生成
+2. `translationRecordId`：UUID，客户端生成
 3. `sourceLang`：源语言（如 `zh` / `en`，可选，默认 `zh`）
 4. `targetLang`：目标语言（如 `en` / `zh`，可选，默认 `en`）
 5. `audio`：音频固定规格（服务端校验）
 6. Client 鈫?WS: `stop`
+
 
 
 

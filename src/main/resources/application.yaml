@@ -2,7 +2,7 @@ spring:
   application:
     name: asrAgent
   datasource:
-    url: jdbc:postgresql://localhost:5432/asr_agent
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=asr_agent
     username: postgres
     password: mysecret
   ai:
@@ -17,7 +17,7 @@ spring:
       #  dimensions: 1536
         distance-type: COSINE_DISTANCE
         max-document-batch-size: 10000
-
+        initialize-schema: true  # 核心配置：设为 true 即可自动建表
   session:
     store-type: redis
     # session 30 天过期

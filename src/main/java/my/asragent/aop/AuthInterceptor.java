@@ -2,6 +2,7 @@ package my.asragent.aop;
 
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import my.asragent.annotation.AuthCheck;
 import my.asragent.entity.User;
 import my.asragent.enums.UserRoleEnum;

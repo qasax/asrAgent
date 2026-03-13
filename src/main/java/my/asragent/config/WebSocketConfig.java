@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 @Configuration
 @EnableWebSocket
@@ -19,6 +20,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 单一 WebSocket 端点承载控制消息与二进制音频帧。
         registry.addHandler(audioWebSocketHandler, "/ws/audio")
+                .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOrigins("*");
     }
 }
