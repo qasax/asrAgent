@@ -16,10 +16,11 @@ import java.util.Map;
 public class MindMapNode implements NodeAction {
     @Override
     public Map<String, Object> apply(OverAllState state) throws Exception {
+
         MermaidDiagramTool mermaidDiagramTool = SpringContextUtil.getBean(MermaidDiagramTool.class);
         ImageGenerationDecision imageGenerationDecision = (ImageGenerationDecision) state.value("imgPlan").get();
         Map initMap = (HashMap<String, Object>) state.value("init").get();
-
+        log.info("进入思维导图生成阶段 TranslationId:{}",initMap.get("translationRecordId").toString());
         String imgUrl = mermaidDiagramTool.generateMermaidDiagram(imageGenerationDecision.getMindMap().getMermaidCode());
         String translationRecordId = initMap.get("translationRecordId").toString();
         TranslationResultService translationResultService = SpringContextUtil.getBean(TranslationResultService.class);
@@ -27,7 +28,7 @@ public class MindMapNode implements NodeAction {
         translationResult.setId(Long.valueOf(translationRecordId));
         translationResult.setImgUrl(imgUrl);
         translationResultService.updateById(translationResult);
-        log.info("思维导图图片生成成功 url:{}",imgUrl);
+        log.info("思维导图图片生成成功 url:{} TranslationId:{}",imgUrl,initMap.get("translationRecordId").toString());
         return Map.of();
     }
 }

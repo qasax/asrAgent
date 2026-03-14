@@ -24,6 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.BlockingQueue;
 
+import static my.asragent.ai.workflow.MainWorkFlowService.FINISH_SIGNAL;
+
 @Slf4j
 @Service
 /**
@@ -115,6 +117,9 @@ public class RealtimeAsrService {
                 previousFinalTextMap.remove(audioSession.getTranslationRecordId());
                 fullTranslationMap.remove(audioSession.getTranslationRecordId());
                 workflowStartedMap.remove(audioSession.getTranslationRecordId());
+                BlockingQueue<String> blockingQueue = mainWorkFlowService.getOrCreateQueue(audioSession.getTranslationRecordId());
+                blockingQueue.offer(FINISH_SIGNAL);
+                log.info("转译结束，translationId={},总结节点停止阻塞，继续后续主工作流，", audioSession.getTranslationRecordId());
                 audioSession.emitError("INTERNAL_ERROR", "ASR closed: " + code + ":" + reason);
             }
         });

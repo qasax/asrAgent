@@ -381,22 +381,16 @@ public class AudioSession {
      * 异步执行快速翻译任务。
      */
     private void triggerQuickTranslation(String fullText, String translateText) {
-        llmExecutor.submit(() -> {
-            try {
-                log.debug("LLM Quick translation start: translationRecordId={}", translationRecordId);
-                String result = llmService.quickTranslate(fullText, translateText, sourceLang, targetLang);
-                if (result != null && !result.isBlank()) {
-                    synchronized (quickTranslationLock) {
-                        quickTranslatedText.append(result).append(' ');
-                    }
-                    emit(ServerMessage.quickTranslation(result));
-                    log.debug("LLM Quick translation done: translationRecordId={}", translationRecordId);
-                }
-            } catch (Exception ex) {
-                log.warn("LLM Quick translation failed: translationRecordId={}, message={}", translationRecordId, ex.getMessage());
-                emitError("INTERNAL_ERROR", "Quick Translation failed");
-            }
-        });
+        try {
+            log.debug("LLM Quick translation start: translationRecordId={}", translationRecordId);
+            llmService.quickTranslate(fullText, translateText, sourceLang, targetLang).blockingForEach(translatedText -> {
+                quickTranslatedText.append(translatedText.getOutput().getChoices().get(0).getMessage().getContent());
+                emit(ServerMessage.quickTranslation(getAdaptiveWindow(quickTranslatedText.toString(), this.targetLang)));
+            });
+        } catch (Exception ex) {
+            log.warn("LLM Quick translation failed: translationRecordId={}, message={}", translationRecordId, ex.getMessage());
+            emitError("INTERNAL_ERROR", "Quick Translation failed");
+        }
     }
 
 
@@ -538,7 +532,7 @@ public class AudioSession {
         boolean isCjk = isCjkByLangOrContent(content, langCode);
 
         // 2. 设置阈值：CJK 40字, 西文 120字符
-        int limit = isCjk ? 40 : 120;
+        int limit = isCjk ? 30 : 60;
         if (content.length() <= limit) {
             return content;
         }
@@ -556,7 +550,7 @@ public class AudioSession {
             }
         }
 
-        return "..." + content.substring(startIndex);
+        return content.substring(startIndex);
     }
 
     private static boolean isCjkByLangOrContent(String content, String langCode) {

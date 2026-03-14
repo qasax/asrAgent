@@ -4,6 +4,7 @@ import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.action.NodeAction;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.mybatisflex.core.query.QueryWrapper;
+import lombok.extern.slf4j.Slf4j;
 import my.asragent.entity.TranslationResult;
 import my.asragent.service.TranslationResultService;
 import my.asragent.utils.SpringContextUtil;
@@ -21,12 +22,14 @@ import static my.asragent.ai.workflow.MainWorkFlowService.FINISH_SIGNAL;
 /**
  * 总结类，总结转译内容并入库
  */
+@Slf4j
 public class SummaryNode implements NodeAction {
 
 
     @Override
     public Map<String, Object> apply(OverAllState state) {
         Map initMap = (HashMap<String, Object>) state.value("init").get();
+        log.info("进入阶段总结节点TranslationId:{}",initMap.get("translationRecordId").toString());
         ReactAgent summaryAgent = (ReactAgent) SpringContextUtil.getBean("summaryAgent");
         TranslationResultService translationResultService = SpringContextUtil.getBean(TranslationResultService.class);
         Map<String, Object> returnMap = new HashMap<>();
@@ -42,7 +45,7 @@ public class SummaryNode implements NodeAction {
                 if (stageText.equals(FINISH_SIGNAL)) {
                     returnMap.put("summary", translationResultService.getOne(queryWrapper).getSummaryText());
                     isStop = true;
-                    continue;
+                    break;
                 }
                 //获取全文，进行阶段性总结
                 AssistantMessage assistantMessage = summaryAgent.call(new UserMessage(stageText));
@@ -56,6 +59,7 @@ public class SummaryNode implements NodeAction {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        log.info("退出阶段总结节点:{}",initMap.get("translationRecordId").toString());
         return returnMap;
     }
 }

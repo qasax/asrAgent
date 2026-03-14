@@ -14,6 +14,8 @@ public class DispChatModel {
     private String modelName;
     @Value("${spring.ai.dashscope.api-key}")
     private String apiKey;
+    @Value("${spring.ai.dashscope.chat.options.multi-model}")
+    private Boolean  multiModel;
 
     @Bean("analyseChatModel")
     public ChatModel chatModel() {
@@ -22,14 +24,16 @@ public class DispChatModel {
                 .apiKey(apiKey)
                 .build();
         DashScopeChatOptions options = DashScopeChatOptions.builder()
-                .withModel("qwen-plus")           // 模型名称
-                .withTemperature(0.7)              // Temperature 参数
+                .multiModel(multiModel)
+                .withModel(modelName)           // 模型名称
+                .withTemperature(0.5)              // Temperature 参数
                 .withMaxToken(2000)                // 最大令牌数
                 .withTopP(0.9)                     // Top-P 采样
                 .build();
         // 创建 ChatModel
         return DashScopeChatModel.builder()
                 .dashScopeApi(dashScopeApi)
+                .defaultOptions(options)
                 .build();
     }
 }

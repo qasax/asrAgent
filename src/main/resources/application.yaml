@@ -10,7 +10,8 @@ spring:
       api-key: sk-355fdaeddf5743078b7d4c9efde61980
       chat:
         options:
-          model: qwen-plus
+          model: qwen3-max-2025-09-23
+          multi-model: false
     vectorstore:
       pgvector:
         index-type: HNSW
@@ -35,7 +36,9 @@ asr:
   realtime:
     model: qwen3-asr-flash-realtime
     url: wss://dashscope.aliyuncs.com/api-ws/v1/realtime
-
+translate:
+  model: qwen-mt-flash
+  api-key: sk-355fdaeddf5743078b7d4c9efde61980
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

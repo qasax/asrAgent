@@ -113,7 +113,7 @@ public class AudioSseController {
     @GetMapping("/sse/qa")
     @Operation(summary = "订阅实时回答会话 SSE", description = "根据 translationRecordId 订阅实时回答会话的 SSE 推送")
     public Flux<String> stream(@Parameter(description = "会话ID", required = true) @RequestParam String translationRecordId,
-                               @RequestParam String userMessage) {
+                               @Parameter(description = "用户消息", required = true) @RequestParam String userMessage) {
         return qaService.getAnswer(translationRecordId, userMessage);
     }
 
