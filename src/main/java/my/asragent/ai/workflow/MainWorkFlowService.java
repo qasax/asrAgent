@@ -41,7 +41,7 @@ public class MainWorkFlowService {
         initMap.put("blockingQueue", blockingQueue);
         initMap.put("userId", userId);
         initMap.put("translationRecordId", translationRecordId);
-        CompiledGraph compiledGraph = MainGraph.getGraph().compile();
+        CompiledGraph compiledGraph = new MainGraph().getGraph().compile();
         compiledGraph.stream(Map.of("init", initMap))
                 .doOnNext(output -> {
                     if (output instanceof StreamingOutput<?> streamingOutput) {

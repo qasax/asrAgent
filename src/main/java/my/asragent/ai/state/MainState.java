@@ -18,7 +18,7 @@ public class MainState {
             HashMap<String, KeyStrategy> strategies = new HashMap<>();
             strategies.put("init", new ReplaceStrategy());
             strategies.put("summaryText", new ReplaceStrategy());
-
+            strategies.put("imgPlan", new ReplaceStrategy());
             return strategies;
         };
     }

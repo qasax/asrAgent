@@ -52,3 +52,13 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+minio:
+  endpoint: http://localhost:9000
+  access-key: admin
+  secret-key: password123
+  bucket: asrAgent
+  public-endpoint: http://localhost:9000
+logging:
+  level:
+    root: INFO
+    my.asragent.service: DEBUG

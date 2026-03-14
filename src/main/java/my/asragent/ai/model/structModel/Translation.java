@@ -1,4 +1,4 @@
-package my.asragent.ai.model.response;
+package my.asragent.ai.model.structModel;
 
 import lombok.Data;
 

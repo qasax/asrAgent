@@ -38,12 +38,18 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Data
 public class AudioSession {
-    /** 用于回放的最近 SSE 事件最大保留数。 */
+    /**
+     * 用于回放的最近 SSE 事件最大保留数。
+     */
     private static final int HISTORY_LIMIT = 200;
 
-    /** 客户端在 WebSocket `start` 中提供的业务会话 ID。 */
+    /**
+     * 客户端在 WebSocket `start` 中提供的业务会话 ID。
+     */
     private final String translationRecordId;
-    /** 客户端声明的音频约束，用于校验分片形态。 */
+    /**
+     * 客户端声明的音频约束，用于校验分片形态。
+     */
     private final AudioSpec spec;
     private final ObjectMapper objectMapper;
     private final LlmService llmService;
@@ -54,34 +60,52 @@ public class AudioSession {
     private final ExecutorService llmExecutor;
     private volatile String sourceLang;
     private volatile String targetLang;
-    /** SSE `id` 字段使用的单调递增事件 ID。 */
+    /**
+     * SSE `id` 字段使用的单调递增事件 ID。
+     */
     private final AtomicLong eventSeq = new AtomicLong(0);
-    /** 用于 Last-Event-ID 回放的环形历史（按 HISTORY_LIMIT 裁剪）。 */
+    /**
+     * 用于 Last-Event-ID 回放的环形历史（按 HISTORY_LIMIT 裁剪）。
+     */
     private final Deque<SseEvent> history = new ArrayDeque<>();
     private final Object historyLock = new Object();
-    /** 累计最终转写片段直到会话关闭。 */
+    /**
+     * 累计最终转写片段直到会话关闭。
+     */
     private final StringBuilder transcript = new StringBuilder();
     private final StringBuilder translatedText = new StringBuilder();
     private final StringBuilder quickTranslatedText = new StringBuilder();
     private final Object translationLock = new Object();
     private final Object quickTranslationLock = new Object();
-    /** 保证 close() 在竞争关闭路径下幂等的保护。 */
+    /**
+     * 保证 close() 在竞争关闭路径下幂等的保护。
+     */
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    /** 标记是否已执行过 start，防止重复启动上游 ASR。 */
+    /**
+     * 标记是否已执行过 start，防止重复启动上游 ASR。
+     */
     private final AtomicBoolean started = new AtomicBoolean(false);
-    /** 关闭前等待上游回传最终转写事件的缓冲时间。 */
+    /**
+     * 关闭前等待上游回传最终转写事件的缓冲时间。
+     */
     private static final long FINAL_FLUSH_WAIT_MS = 500L;
 
-    /** 当前 SSE 订阅者，重连时替换。 */
+    /**
+     * 当前 SSE 订阅者，重连时替换。
+     */
     private volatile SseEmitter emitter;
-    /** 上游 DashScope 实时会话。 */
+    /**
+     * 上游 DashScope 实时会话。
+     */
     private volatile OmniRealtimeConversation conversation;
-    /** 预留给向量库/普通表存储使用的用户标识。 */
+    /**
+     * 预留给向量库/普通表存储使用的用户标识。
+     */
     private volatile String user_id;
     private volatile BigInteger userId;
 
     // 中日韩语言代码前缀
-    private static final Set<String> CJK_LANGS = Set.of("zh", "ja", "ko");
+    private static final Set<String> CJK_LANGS = Set.of("zh", "ja", "ko", "yue");
 
     public AudioSession(String translationRecordId,
                         AudioSpec spec,
@@ -106,23 +130,30 @@ public class AudioSession {
         this.sourceLang = normalizeLang(sourceLang, "zh");
         this.targetLang = normalizeLang(targetLang, "en");
     }
+
     public void setConversation(OmniRealtimeConversation conversation) {
         this.conversation = conversation;
         log.info("ASR conversation ready: translationRecordId={}", translationRecordId);
     }
 
-    /** 尝试标记会话启动，只允许首个 start 成功。 */
+    /**
+     * 尝试标记会话启动，只允许首个 start 成功。
+     */
     public boolean tryMarkStarted() {
         return started.compareAndSet(false, true);
     }
 
-    /** 根据 start 请求刷新语种配置。 */
+    /**
+     * 根据 start 请求刷新语种配置。
+     */
     public void configureLanguages(String sourceLang, String targetLang) {
         this.sourceLang = normalizeLang(sourceLang, "zh");
         this.targetLang = normalizeLang(targetLang, "en");
     }
 
-    /** 绑定 SSE 订阅用户，用于防止跨用户误订阅。 */
+    /**
+     * 绑定 SSE 订阅用户，用于防止跨用户误订阅。
+     */
     public void bindSse(BigInteger userId) {
         if (userId == null) {
             return;
@@ -136,17 +167,23 @@ public class AudioSession {
         this.user_id = userId.toString();
     }
 
-    /** 返回会话是否已进入关闭流程。 */
+    /**
+     * 返回会话是否已进入关闭流程。
+     */
     public boolean isClosed() {
         return closed.get();
     }
 
-    /** 根据协商规格校验进入的 WebSocket 音频帧大小。 */
+    /**
+     * 根据协商规格校验进入的 WebSocket 音频帧大小。
+     */
     public boolean isChunkSizeValid(int size) {
         return size > 0 && size <= spec.bytesPerChunk();
     }
 
-    /** 编码并转发一个 PCM 帧到实时 ASR。 */
+    /**
+     * 编码并转发一个 PCM 帧到实时 ASR。
+     */
     public void appendAudio(byte[] pcmBytes) {
         OmniRealtimeConversation current = this.conversation;
         if (current == null || closed.get()) {
@@ -158,21 +195,25 @@ public class AudioSession {
         current.appendAudio(b64);
     }
 
-    /** 以低延迟 SSE 事件发送非最终转写文本。 */
-    public void onPartial(String text,String stash) {
+    /**
+     * 以低延迟 SSE 事件发送非最终转写文本。
+     */
+    public void onPartial(String text, String stash) {
         if (text == null || text.isBlank()) {
             return;
         }
         String fullText = text + stash;
         //滑动窗口处理
         String windowText = getAdaptiveWindow(fullText, this.sourceLang);
-        log.debug("ASR partial: translationRecordId={}, text={}", translationRecordId, text);
+        log.debug("ASR partial: translationRecordId={}, text={} stash={}", translationRecordId, text, stash);
         emit(ServerMessage.partial(windowText));
         //快速翻译
-        triggerQuickTranslation(fullText,windowText);
+        triggerQuickTranslation(fullText, windowText);
     }
 
-    /** 发送最终分片，追加到转写文本后触发翻译。 */
+    /**
+     * 发送最终分片，追加到转写文本后触发翻译。
+     */
     public void onFinal(String text) {
         if (text == null || text.isBlank()) {
             return;
@@ -185,11 +226,17 @@ public class AudioSession {
             return;
         }
         log.info("ASR final: translationRecordId={}, text={}", translationRecordId, text);
+        //滑动窗口处理--对于部分较短的语句，不会走part返回，而是在final一次性返回，需要特殊处理
+        String windowText = getAdaptiveWindow(text, this.sourceLang);
+        emit(ServerMessage.partial(windowText));
+
         emit(ServerMessage.finalText(text));
         triggerTranslation(text);
     }
 
-    /** 会话结束时调用一次，执行转写级后处理。 */
+    /**
+     * 会话结束时调用一次，执行转写级后处理。
+     */
     public void onStop() {
         String fullText;
         synchronized (transcript) {
@@ -198,7 +245,9 @@ public class AudioSession {
         log.info("Session stop: translationRecordId={}, transcriptLength={}", translationRecordId, fullText.length());
     }
 
-    /** 向 SSE 订阅者发送标准化服务端错误事件。 */
+    /**
+     * 向 SSE 订阅者发送标准化服务端错误事件。
+     */
     public void emitError(String code, String message) {
         log.warn("SSE error: translationRecordId={}, code={}, message={}", translationRecordId, code, message);
         emit(ServerMessage.error(code, message));
@@ -207,7 +256,7 @@ public class AudioSession {
     /**
      * 绑定/重新绑定 SSE emitter，并可选回放遗漏事件。
      *
-     * @param emitter 控制器创建的活动 emitter
+     * @param emitter     控制器创建的活动 emitter
      * @param lastEventId 来自 `Last-Event-ID` 的回放游标
      */
     public void attachEmitter(SseEmitter emitter, Long lastEventId) {
@@ -240,7 +289,7 @@ public class AudioSession {
 
     /**
      * 确保仅关闭一次会话并释放外部资源。
-     *
+     * <p>
      * 副作用：
      * - 触发摘要/问答流程
      * - 结束上游 ASR 会话
@@ -268,7 +317,9 @@ public class AudioSession {
         }
     }
 
-    /** 序列化载荷，写入回放历史，并推送到当前 SSE 客户端。 */
+    /**
+     * 序列化载荷，写入回放历史，并推送到当前 SSE 客户端。
+     */
     private void emit(Object payload) {
         String json;
         try {
@@ -290,7 +341,9 @@ public class AudioSession {
         }
     }
 
-    /** 向 SSE 客户端发送事件；失败则清空 emitter 以便重连。 */
+    /**
+     * 向 SSE 客户端发送事件；失败则清空 emitter 以便重连。
+     */
     private void sendEvent(SseEmitter emitter, SseEvent event) {
         try {
             emitter.send(SseEmitter.event()
@@ -302,7 +355,9 @@ public class AudioSession {
         }
     }
 
-    /** 对每个最终分片异步执行翻译任务。 */
+    /**
+     * 对每个最终分片异步执行翻译任务。
+     */
     private void triggerTranslation(String text) {
         llmExecutor.submit(() -> {
             try {
@@ -322,7 +377,9 @@ public class AudioSession {
         });
     }
 
-    /** 异步执行快速翻译任务。 */
+    /**
+     * 异步执行快速翻译任务。
+     */
     private void triggerQuickTranslation(String fullText, String translateText) {
         llmExecutor.submit(() -> {
             try {
@@ -332,7 +389,7 @@ public class AudioSession {
                     synchronized (quickTranslationLock) {
                         quickTranslatedText.append(result).append(' ');
                     }
-                    emit(ServerMessage.translation(result));
+                    emit(ServerMessage.quickTranslation(result));
                     log.debug("LLM Quick translation done: translationRecordId={}", translationRecordId);
                 }
             } catch (Exception ex) {
@@ -343,7 +400,9 @@ public class AudioSession {
     }
 
 
-    /** 关闭会话时执行完整翻译落库与向量入库兜底，确保断连后数据完整。 */
+    /**
+     * 关闭会话时执行完整翻译落库与向量入库兜底，确保断连后数据完整。
+     */
     private void persistTranslationIfNeeded() {
         BigInteger currentUserId = this.userId;
         if (currentUserId == null) {
@@ -412,7 +471,9 @@ public class AudioSession {
         }
     }
 
-    /** 将会话完整快照写入向量库，用于断连后的完整检索。 */
+    /**
+     * 将会话完整快照写入向量库，用于断连后的完整检索。
+     */
     private void persistVectorSnapshot(String fullText, String translationText) {
         try {
             Map<String, Object> metadata = new HashMap<>();
@@ -432,7 +493,9 @@ public class AudioSession {
         }
     }
 
-    /** 等待上游 ASR 将缓冲中的最终文本回传，减少断连时遗漏。 */
+    /**
+     * 等待上游 ASR 将缓冲中的最终文本回传，减少断连时遗漏。
+     */
     private void waitForFinalFlush() {
         try {
             Thread.sleep(FINAL_FLUSH_WAIT_MS);
@@ -441,7 +504,9 @@ public class AudioSession {
         }
     }
 
-    /** 解析当前会话对应的转译记录 ID。 */
+    /**
+     * 解析当前会话对应的转译记录 ID。
+     */
     private Long parseSessionRecordId() {
         try {
             return Long.valueOf(translationRecordId);
@@ -459,7 +524,8 @@ public class AudioSession {
 
     /**
      * 根据语系智能获取滑动窗口内容
-     * @param content 全量文本
+     *
+     * @param content  全量文本
      * @param langCode 语言代码 (如 "en-US", "zh-CN")
      * @return 截断后的字幕
      */

@@ -139,7 +139,7 @@ public class RealtimeAsrService {
                 .modalities(Collections.singletonList(OmniRealtimeModality.TEXT))
                 .transcriptionConfig(transcriptionParam)
                 .turnDetectionThreshold(0f)
-                .turnDetectionSilenceDurationMs(400)
+                .turnDetectionSilenceDurationMs(800)
                 .build();
         conversation.updateSession(config);
         audioSession.setConversation(conversation);

@@ -42,6 +42,13 @@ public class ServerMessage {
         msg.text = text;
         return msg;
     }
+    /** 创建快速翻译消息。 */
+    public static ServerMessage quickTranslation(String text) {
+        ServerMessage msg = new ServerMessage();
+        msg.type = "quickTranslation";
+        msg.text = text;
+        return msg;
+    }
 
     /** 创建摘要消息。 */
     public static ServerMessage summary(String text) {

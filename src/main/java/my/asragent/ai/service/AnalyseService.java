@@ -5,7 +5,7 @@ import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import my.asragent.ai.model.response.Translation;
+import my.asragent.ai.model.structModel.Translation;
 import my.asragent.entity.TranslationResult;
 import my.asragent.service.TranslationResultService;
 import org.springframework.ai.chat.messages.AssistantMessage;

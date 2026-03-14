@@ -1,6 +1,7 @@
 package my.asragent.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import my.asragent.ai.service.QAService;
 import my.asragent.entity.User;
 import my.asragent.exception.BusinessException;
 import my.asragent.model.ServerMessage;
@@ -18,6 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import reactor.core.publisher.Flux;
 
 import java.math.BigInteger;
 
@@ -32,18 +34,20 @@ import java.math.BigInteger;
 public class AudioSseController {
     private final AudioSessionManager sessionManager;
     private final UserService userService;
+    private final QAService qaService;
 
-    public AudioSseController(AudioSessionManager sessionManager, UserService userService) {
+    public AudioSseController(AudioSessionManager sessionManager, UserService userService, QAService qaService) {
         this.sessionManager = sessionManager;
         this.userService = userService;
+        this.qaService = qaService;
     }
 
     /**
      * 为指定音频会话打开 SSE 流。
      *
      * @param translationRecordId 由 WebSocket `start` 创建的目标会话 ID
-     * @param lastEventId 用于回放的可选事件游标
-     * @param response 用于设置流式响应友好头的 servlet 响应
+     * @param lastEventId         用于回放的可选事件游标
+     * @param response            用于设置流式响应友好头的 servlet 响应
      * @return 活动 emitter，或携带错误事件的短生命周期 emitter
      */
     @GetMapping("/sse/audio")
@@ -104,4 +108,14 @@ public class AudioSseController {
         emitter.send(SseEmitter.event().name("ready").data(ServerMessage.info("ready", "sse_connected")));
         return emitter;
     }
+
+
+    @GetMapping("/sse/qa")
+    @Operation(summary = "订阅实时回答会话 SSE", description = "根据 translationRecordId 订阅实时回答会话的 SSE 推送")
+    public Flux<String> stream(@Parameter(description = "会话ID", required = true) @RequestParam String translationRecordId,
+                               @RequestParam String userMessage) {
+        return qaService.getAnswer(translationRecordId, userMessage);
+    }
+
 }
+

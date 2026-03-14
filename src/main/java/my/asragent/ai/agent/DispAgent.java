@@ -3,7 +3,7 @@ package my.asragent.ai.agent;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
 import jakarta.annotation.Resource;
-import my.asragent.ai.model.response.Translation;
+import my.asragent.ai.model.structModel.Translation;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +26,8 @@ public class DispAgent {
     private String translateSystemPrompt;
     @Value("classpath:/prompts/summary.st")
     private String summaryPrompt;
+    @Value("classpath:/prompts/imagePlan.st")
+    private String imagePlanPrompt;
     /**
      * 预留的 Bean 注册入口。
      * <p>
@@ -74,9 +76,34 @@ public class DispAgent {
     @Bean("summaryAgent")
     public ReactAgent summaryAgent() {
         return ReactAgent.builder()
-                .name("translateAgent")
+                .name("summaryAgent")
                 .model(analyseChatModel)
-                .systemPrompt(translateSystemPrompt)
+                .systemPrompt(summaryPrompt)
+                .build();
+    }
+    /**
+     * 图片生成计划
+     *
+     */
+    @Bean("imgPlanAgent")
+    public ReactAgent imgPlanAgent() {
+        return ReactAgent.builder()
+                .name("imgPlanAgent")
+                .model(analyseChatModel)
+                .systemPrompt(imagePlanPrompt)
+                .build();
+    }
+
+    /**
+     *
+     * 问答agent
+     */
+    @Bean("qaAgent")
+    public ReactAgent qaAgent() {
+        return ReactAgent.builder()
+                .name("qaAgent")
+                .model(analyseChatModel)
+                .systemPrompt(imagePlanPrompt)
                 .build();
     }
 }
