@@ -2,12 +2,18 @@ package my.asragent.ai.agent;
 
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
+import com.alibaba.cloud.ai.graph.checkpoint.savers.redis.RedisSaver;
 import jakarta.annotation.Resource;
+import my.asragent.ai.hooks.RAGAgentHook;
 import my.asragent.ai.model.structModel.Translation;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
 
 /**
  * 代理接线的占位类。
@@ -28,6 +34,12 @@ public class DispAgent {
     private String summaryPrompt;
     @Value("classpath:/prompts/imagePlan.st")
     private String imagePlanPrompt;
+    @Value("classpath:/prompts/qa.st")
+    private String qaPrompt;
+    @Resource
+    private RAGAgentHook ragAgentHook;
+    @Resource
+    private RedissonClient redissonClient;
     /**
      * 预留的 Bean 注册入口。
      * <p>
@@ -103,7 +115,9 @@ public class DispAgent {
         return ReactAgent.builder()
                 .name("qaAgent")
                 .model(analyseChatModel)
-                .systemPrompt(imagePlanPrompt)
+                .hooks(ragAgentHook)
+                .systemPrompt(qaPrompt)
+                .saver(RedisSaver.builder().redisson(redissonClient).build())
                 .build();
     }
 }

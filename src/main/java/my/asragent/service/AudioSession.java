@@ -60,6 +60,7 @@ public class AudioSession {
     private final ExecutorService llmExecutor;
     private volatile String sourceLang;
     private volatile String targetLang;
+    private final AtomicBoolean translating = new AtomicBoolean(false);
     /**
      * SSE `id` 字段使用的单调递增事件 ID。
      */
@@ -381,16 +382,27 @@ public class AudioSession {
      * 异步执行快速翻译任务。
      */
     private void triggerQuickTranslation(String fullText, String translateText) {
-        try {
-            log.debug("LLM Quick translation start: translationRecordId={}", translationRecordId);
-            llmService.quickTranslate(fullText, translateText, sourceLang, targetLang).blockingForEach(translatedText -> {
-                quickTranslatedText.append(translatedText.getOutput().getChoices().get(0).getMessage().getContent());
-                emit(ServerMessage.quickTranslation(getAdaptiveWindow(quickTranslatedText.toString(), this.targetLang)));
-            });
-        } catch (Exception ex) {
-            log.warn("LLM Quick translation failed: translationRecordId={}, message={}", translationRecordId, ex.getMessage());
-            emitError("INTERNAL_ERROR", "Quick Translation failed");
+        // 如果正在翻译，上一次任务还没完成，就直接跳过
+        if (!translating.compareAndSet(false, true)) {
+            log.debug("Skipping Quick Translation, previous task still running: translationRecordId={}", translationRecordId);
+            return;
         }
+        llmExecutor.submit(() -> {
+            try {
+                log.debug("LLM Quick translation start: translationRecordId={}", translationRecordId);
+                llmService.quickTranslate(fullText, translateText, sourceLang, targetLang).blockingForEach(translatedText -> {
+                    quickTranslatedText.append(translatedText.getOutput().getChoices().get(0).getMessage().getContent());
+                    emit(ServerMessage.quickTranslation(getAdaptiveWindow(quickTranslatedText.toString(), this.targetLang)));
+                });
+                Thread.sleep(100);
+                log.debug("LLM Quick translation end: translationRecordId={}", translationRecordId);
+            } catch (Exception ex) {
+                log.warn("LLM Quick translation failed: translationRecordId={}, message={}", translationRecordId, ex.getMessage());
+                emitError("INTERNAL_ERROR", "Quick Translation failed");
+            } finally {
+                translating.set(false);
+            }
+        });
     }
 
 
@@ -532,7 +544,7 @@ public class AudioSession {
         boolean isCjk = isCjkByLangOrContent(content, langCode);
 
         // 2. 设置阈值：CJK 40字, 西文 120字符
-        int limit = isCjk ? 30 : 60;
+        int limit = isCjk ? 40 : 100;
         if (content.length() <= limit) {
             return content;
         }

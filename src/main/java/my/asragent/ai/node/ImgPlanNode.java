@@ -25,7 +25,7 @@ public class ImgPlanNode implements NodeAction {
         ReactAgent summaryAgent = (ReactAgent) SpringContextUtil.getBean("imgPlanAgent");
         AssistantMessage assistantMessage = summaryAgent.call(new UserMessage(summary));
         ImageGenerationDecision imageGenerationDecision = (ImageGenerationDecision) JSONObject.parse(assistantMessage.getText());
-        log.info("生图计划节点即将结束:{} TranslationID:{}", imageGenerationDecision,initMap.get("translationRecordId").toString());
+        log.info("生图计划节点即将结束:{} TranslationID:{} assistantMessage:{}", imageGenerationDecision,initMap.get("translationRecordId").toString(),assistantMessage);
         return Map.of("imgPlan",imageGenerationDecision);
     }
 }

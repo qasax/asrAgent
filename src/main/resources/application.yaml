@@ -28,7 +28,9 @@ spring:
       host: localhost
       ttl: 3600
       port: 6379
-      password:
+redisson:
+  singleServerConfig:
+    address: "redis://127.0.0.1:6379"
 server:
   port: 8123
 
