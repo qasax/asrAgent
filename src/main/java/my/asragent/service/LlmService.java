@@ -35,9 +35,9 @@ public class LlmService {
     private final ChatModel analyseChatModel;
     private static final int QUICK_TRANSLATE_MAX_TOKENS = 256;
     private String translateTemplate = """
-            Source Language: %s ,
-            Target Language: %s,
-            Target:%s.
+            源语言: %s ,
+            目标语言: %s,
+            待翻译文本:%s.
             """;
     @Value("${translate.model}")
     private String translateModel;

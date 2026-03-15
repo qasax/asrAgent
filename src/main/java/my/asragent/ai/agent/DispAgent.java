@@ -5,6 +5,7 @@ import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
 import com.alibaba.cloud.ai.graph.checkpoint.savers.redis.RedisSaver;
 import jakarta.annotation.Resource;
 import my.asragent.ai.hooks.RAGAgentHook;
+import my.asragent.ai.model.structModel.ImageGenerationDecision;
 import my.asragent.ai.model.structModel.Translation;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.RedisClient;
@@ -102,6 +103,7 @@ public class DispAgent {
         return ReactAgent.builder()
                 .name("imgPlanAgent")
                 .model(analyseChatModel)
+                .outputType(ImageGenerationDecision.class)
                 .systemPrompt(imagePlanPrompt)
                 .build();
     }
@@ -114,6 +116,22 @@ public class DispAgent {
     public ReactAgent qaAgent() {
         return ReactAgent.builder()
                 .name("qaAgent")
+                .model(analyseChatModel)
+                .hooks(ragAgentHook)
+                .systemPrompt(qaPrompt)
+                .saver(RedisSaver.builder().redisson(redissonClient).build())
+                .build();
+    }
+
+
+    /**
+     *
+     * 关键词生图Agen
+     */
+    @Bean("keyimageAgent")
+    public ReactAgent keyimageAgent() {
+        return ReactAgent.builder()
+                .name("keyimageAgent")
                 .model(analyseChatModel)
                 .hooks(ragAgentHook)
                 .systemPrompt(qaPrompt)

@@ -15,7 +15,7 @@ public class AsyncConfig {
      * 有界线程池有助于在并发下控制内存和 CPU 使用。
      */
     @Bean(destroyMethod = "shutdown")
-    public ExecutorService llmExecutorService() {
-        return Executors.newFixedThreadPool(4);
+    public ExecutorService virtualExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

@@ -38,6 +38,8 @@ asr:
   realtime:
     model: qwen3-asr-flash-realtime
     url: wss://dashscope.aliyuncs.com/api-ws/v1/realtime
+image:
+  model: qwen-image-plus
 translate:
   model: qwen-mt-flash
   api-key: sk-355fdaeddf5743078b7d4c9efde61980
@@ -61,7 +63,7 @@ minio:
   endpoint: http://localhost:9000
   access-key: admin
   secret-key: password123
-  bucket: asrAgent
+  bucket: asragent
   public-endpoint: http://localhost:9000
 logging:
   level:

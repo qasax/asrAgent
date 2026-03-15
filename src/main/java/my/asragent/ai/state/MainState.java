@@ -2,7 +2,6 @@ package my.asragent.ai.state;
 
 import com.alibaba.cloud.ai.graph.KeyStrategy;
 import com.alibaba.cloud.ai.graph.KeyStrategyFactory;
-import com.alibaba.cloud.ai.graph.state.strategy.AppendStrategy;
 import com.alibaba.cloud.ai.graph.state.strategy.ReplaceStrategy;
 import lombok.Data;
 
@@ -17,7 +16,7 @@ public class MainState {
         return () -> {
             HashMap<String, KeyStrategy> strategies = new HashMap<>();
             strategies.put("init", new ReplaceStrategy());
-            strategies.put("summaryText", new ReplaceStrategy());
+            strategies.put("summary", new ReplaceStrategy());
             strategies.put("imgPlan", new ReplaceStrategy());
             return strategies;
         };

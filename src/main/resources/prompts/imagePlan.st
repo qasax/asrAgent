@@ -32,5 +32,7 @@
 1. 当 思维导图的 generate=true 时，mermaidCode直接返回符合mermaid格式的代码
 2. 当 generate=true 时，prompt 必须是可直接用于图片生成的高质量中文提示词。
 3. 当 generate=false 时，prompt 和 mermaidCode 必须返回空字符串 \"\"。
-4. 可以多选，也可以都不生成。
-5. 禁止输出解释或额外字段。
+4. 词云图wordCloud 你回复的格式应该是: 词语:权重,词语:权重,词语:权重,词语:权重
+5. 关键词卡片 keywordCard 你回复的格式应该是:
+6. 可以多选，也可以都不生成。
+7. 禁止输出解释或额外字段。

@@ -63,7 +63,6 @@ public class RAGAgentHook extends AgentHook {
                         .build();
         Query userQuery = new Query(userQuestion.getText());
         Query transformed = rewriteQueryTransformer.transform(userQuery);
-
         // 构建过滤条件
         FilterExpressionBuilder b = new FilterExpressionBuilder();
         Filter.Expression finalExp = b.and(

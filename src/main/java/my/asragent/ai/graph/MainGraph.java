@@ -3,9 +3,7 @@ package my.asragent.ai.graph;
 import com.alibaba.cloud.ai.graph.StateGraph;
 import com.alibaba.cloud.ai.graph.exception.GraphStateException;
 import my.asragent.ai.model.structModel.ImageGenerationDecision;
-import my.asragent.ai.node.ImgPlanNode;
-import my.asragent.ai.node.MindMapNode;
-import my.asragent.ai.node.SummaryNode;
+import my.asragent.ai.node.*;
 import my.asragent.ai.state.MainState;
 
 import java.util.Map;
@@ -19,18 +17,21 @@ public class MainGraph {
         stateGraph.addNode("summary_node", node_async(new SummaryNode()));
         stateGraph.addNode("imgPlan_node", node_async(new ImgPlanNode()));
         stateGraph.addNode("mindMap_node", node_async(new MindMapNode()));
+        stateGraph.addNode("wordCloud_node", node_async(new WordCloudNode()));
+        stateGraph.addNode("keyWord_node", node_async(new KeyWordNode()));
 
         stateGraph.addEdge(StateGraph.START, "summary_node");
         stateGraph.addEdge("summary_node", "imgPlan_node");
-        stateGraph.addConditionalEdges("imgPlan_node", edge_async(state -> {
-            ImageGenerationDecision imageGenerationDecision = (ImageGenerationDecision) state.value("imgPlan").get();
-            if (imageGenerationDecision.getMindMap().isGenerate()) {
-                return "true";
-            }
-            return "false";
-        }), Map.of("true", "mindMap_node",
-                "false", StateGraph.END));
 
+        // 并发 fan-out
+        stateGraph.addEdge("imgPlan_node", "mindMap_node");
+        stateGraph.addEdge("imgPlan_node", "wordCloud_node");
+        stateGraph.addEdge("imgPlan_node", "keyWord_node");
+
+        // 每个节点结束
+        stateGraph.addEdge("mindMap_node", StateGraph.END);
+        stateGraph.addEdge("wordCloud_node", StateGraph.END);
+        stateGraph.addEdge("keyWord_node", StateGraph.END);
 
         return stateGraph;
     }

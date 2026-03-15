@@ -5,7 +5,6 @@ import com.alibaba.cloud.ai.graph.action.NodeAction;
 import lombok.extern.slf4j.Slf4j;
 import my.asragent.ai.model.structModel.ImageGenerationDecision;
 import my.asragent.ai.tools.MermaidDiagramTool;
-import my.asragent.entity.TranslationResult;
 import my.asragent.service.TranslationResultService;
 import my.asragent.utils.SpringContextUtil;
 
@@ -16,19 +15,19 @@ import java.util.Map;
 public class MindMapNode implements NodeAction {
     @Override
     public Map<String, Object> apply(OverAllState state) throws Exception {
-
         MermaidDiagramTool mermaidDiagramTool = SpringContextUtil.getBean(MermaidDiagramTool.class);
         ImageGenerationDecision imageGenerationDecision = (ImageGenerationDecision) state.value("imgPlan").get();
-        Map initMap = (HashMap<String, Object>) state.value("init").get();
-        log.info("进入思维导图生成阶段 TranslationId:{}",initMap.get("translationRecordId").toString());
-        String imgUrl = mermaidDiagramTool.generateMermaidDiagram(imageGenerationDecision.getMindMap().getMermaidCode());
-        String translationRecordId = initMap.get("translationRecordId").toString();
-        TranslationResultService translationResultService = SpringContextUtil.getBean(TranslationResultService.class);
-        TranslationResult translationResult = new TranslationResult();
-        translationResult.setId(Long.valueOf(translationRecordId));
-        translationResult.setImgUrl(imgUrl);
-        translationResultService.updateById(translationResult);
-        log.info("思维导图图片生成成功 url:{} TranslationId:{}",imgUrl,initMap.get("translationRecordId").toString());
-        return Map.of();
+        if (imageGenerationDecision.getMindMap().isGenerate()) {
+            Map initMap = (HashMap<String, Object>) state.value("init").get();
+            String translationRecordId = initMap.get("translationRecordId").toString();
+            log.info("进入思维导图生成阶段 TranslationId:{}", translationRecordId);
+            String imgUrl = mermaidDiagramTool.generateMermaidDiagram(imageGenerationDecision.getMindMap().getMermaidCode());
+            boolean updated = ImageResultNodeSupport.updateImageField(Long.valueOf(translationRecordId), imgUrl, "mindMap");
+            log.info("思维导图图片生成结束 url:{} TranslationId:{} updated:{}", imgUrl, translationRecordId, updated);
+            return Map.of();
+        } else {
+            log.info("跳过思维导图，计划不需要");
+            return Map.of();
+        }
     }
 }

@@ -47,10 +47,10 @@ public class MainWorkFlowService {
                     if (output instanceof StreamingOutput<?> streamingOutput) {
                         if (streamingOutput.message() != null) {
                             // streaming output from streaming llm node
-                            System.out.println("Streaming output from node " + streamingOutput.node() + ": " + streamingOutput.message().getText());
+                            log.info("Streaming output from node {}: {}", streamingOutput.node(), streamingOutput.message().getText());
                         } else {
                             // output from normal node, investigate the state to get the node data
-                            System.out.println("Output from node " + streamingOutput.node() + ": " + streamingOutput.state().data());
+                            log.info("Output from node {}: {}", streamingOutput.node(), streamingOutput.state().data());
                         }
                     }
                 })

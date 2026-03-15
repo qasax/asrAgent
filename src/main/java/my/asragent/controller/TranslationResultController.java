@@ -1,9 +1,14 @@
 package my.asragent.controller;
 
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import my.asragent.entity.User;
+import my.asragent.service.UserService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +36,8 @@ public class TranslationResultController {
 
     @Autowired
     private TranslationResultService translationResultService;
-
+    @Resource
+    private UserService userService;
     /**
      * 保存。
      *
@@ -91,6 +97,16 @@ public class TranslationResultController {
         return translationResultService.getById(id);
     }
 
+    @GetMapping("getLatesteId")
+    @Operation(summary = "获取转译结果详情", description = "根据主键获取转译结果详情")
+    public Long getLatesteId(HttpServletRequest request) {
+        QueryWrapper queryWrapper = new QueryWrapper();
+        User loginUser = userService.getLoginUser(request);
+        queryWrapper.eq("user_id", loginUser.getId());
+        queryWrapper.orderBy("created_at desc");
+        queryWrapper.limit(1);
+        return translationResultService.getOne(queryWrapper).getId();
+    }
     /**
      * 分页查询。
      *

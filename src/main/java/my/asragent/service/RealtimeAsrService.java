@@ -54,12 +54,12 @@ public class RealtimeAsrService {
     @Resource
     private MainWorkFlowService mainWorkFlowService;
     @Resource
-    private ExecutorService llmExecutorService;
+    private ExecutorService virtualExecutor;
 
     /** 记录每个 session 最近一次最终转写，用于拼接入向量库。 */
     private final Map<String, String> previousFinalTextMap = new ConcurrentHashMap<>();
-    /** 记录每个 session 的累计转译全文，用于工作流队列推送。 */
-    private final Map<String, String> fullTranslationMap = new ConcurrentHashMap<>();
+    /** 记录每个 session 的累计原文全文，用于工作流队列推送。 */
+    private final Map<String, String> fullTranscriptMap = new ConcurrentHashMap<>();
     /** 会话工作流是否已启动标记。 */
     private final Map<String, Boolean> workflowStartedMap = new ConcurrentHashMap<>();
 
@@ -113,14 +113,18 @@ public class RealtimeAsrService {
 
             @Override
             public void onClose(int code, String reason) {
-                log.warn("ASR closed: translationRecordId={}, code={}, reason={}", audioSession.getTranslationRecordId(), code, reason);
-                previousFinalTextMap.remove(audioSession.getTranslationRecordId());
-                fullTranslationMap.remove(audioSession.getTranslationRecordId());
-                workflowStartedMap.remove(audioSession.getTranslationRecordId());
-                BlockingQueue<String> blockingQueue = mainWorkFlowService.getOrCreateQueue(audioSession.getTranslationRecordId());
-                blockingQueue.offer(FINISH_SIGNAL);
-                log.info("转译结束，translationId={},总结节点停止阻塞，继续后续主工作流，", audioSession.getTranslationRecordId());
-                audioSession.emitError("INTERNAL_ERROR", "ASR closed: " + code + ":" + reason);
+                try {
+                    log.warn("ASR closed: translationRecordId={}, code={}, reason={}", audioSession.getTranslationRecordId(), code, reason);
+                    previousFinalTextMap.remove(audioSession.getTranslationRecordId());
+                    fullTranscriptMap.remove(audioSession.getTranslationRecordId());
+                    workflowStartedMap.remove(audioSession.getTranslationRecordId());
+                    BlockingQueue<String> blockingQueue = mainWorkFlowService.getOrCreateQueue(audioSession.getTranslationRecordId());
+                    blockingQueue.put(FINISH_SIGNAL);
+                    log.info("转译结束，translationId={},总结节点停止阻塞，继续后续主工作流，", audioSession.getTranslationRecordId());
+                    audioSession.emitError("INTERNAL_ERROR", "ASR closed: " + code + ":" + reason);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
@@ -173,16 +177,14 @@ public class RealtimeAsrService {
         BlockingQueue<String> blockingQueue = mainWorkFlowService.getOrCreateQueue(translationRecordId);
         startWorkflowIfNeeded(blockingQueue, audioSession.getUser_id(), translationRecordId);
 
-        llmExecutorService.submit(() -> {
+        virtualExecutor.submit(() -> {
             String translationText = translateSafely(audioSession, normalizedCurrentText);
-            String fullTranslationTextInMemory = appendFullTranslationText(translationRecordId, translationText);
-            String fullTranslationText = appendTranslationResult(audioSession, normalizedCurrentText, translationText);
-            String workflowText = (fullTranslationText == null || fullTranslationText.isBlank())
-                    ? fullTranslationTextInMemory
-                    : fullTranslationText;
-            boolean offered = blockingQueue.offer(workflowText);
-            if (!offered) {
-                log.warn("Workflow queue full, text dropped: translationRecordId={}", translationRecordId);
+            String workflowText = appendFullTranscriptText(translationRecordId, normalizedCurrentText);
+            appendTranslationResult(audioSession, normalizedCurrentText, translationText);
+            try {
+                blockingQueue.put(workflowText);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
             persistVectorDocument(audioSession, previousFinalText, normalizedCurrentText, mergedFinalText, translationText);
         });
@@ -278,7 +280,7 @@ public class RealtimeAsrService {
         if (workflowStartedMap.putIfAbsent(translationRecordId, Boolean.TRUE) != null) {
             return;
         }
-        llmExecutorService.submit(() -> {
+        virtualExecutor.submit(() -> {
             try {
                 mainWorkFlowService.startWorkFlow(blockingQueue, userId, translationRecordId);
             } catch (Exception ex) {
@@ -313,10 +315,10 @@ public class RealtimeAsrService {
         return text == null ? "" : text.trim();
     }
 
-    /** 累计会话转译全文，供工作流只接收全文版本。 */
-    private String appendFullTranslationText(String translationRecordId, String translationText) {
-        String normalized = normalizeText(translationText);
-        return fullTranslationMap.merge(translationRecordId, normalized, (oldValue, newValue) -> {
+    /** 累计会话原文全文，供工作流只接收原文版本。 */
+    private String appendFullTranscriptText(String translationRecordId, String transcriptText) {
+        String normalized = normalizeText(transcriptText);
+        return fullTranscriptMap.merge(translationRecordId, normalized, (oldValue, newValue) -> {
             if (oldValue == null || oldValue.isBlank()) {
                 return newValue;
             }

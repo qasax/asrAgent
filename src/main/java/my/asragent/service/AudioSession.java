@@ -57,7 +57,7 @@ public class AudioSession {
     private final AnalyseService analyseService;
     private final MainWorkFlowService mainWorkFlowService;
     private final VectorStore vectorStore;
-    private final ExecutorService llmExecutor;
+    private final ExecutorService virtualExecutor;
     private volatile String sourceLang;
     private volatile String targetLang;
     private final AtomicBoolean translating = new AtomicBoolean(false);
@@ -116,7 +116,7 @@ public class AudioSession {
                         AnalyseService analyseService,
                         MainWorkFlowService mainWorkFlowService,
                         VectorStore vectorStore,
-                        ExecutorService llmExecutor,
+                        ExecutorService virtualExecutor,
                         String sourceLang,
                         String targetLang) {
         this.translationRecordId = translationRecordId;
@@ -127,7 +127,7 @@ public class AudioSession {
         this.analyseService = analyseService;
         this.mainWorkFlowService = mainWorkFlowService;
         this.vectorStore = vectorStore;
-        this.llmExecutor = llmExecutor;
+        this.virtualExecutor = virtualExecutor;
         this.sourceLang = normalizeLang(sourceLang, "zh");
         this.targetLang = normalizeLang(targetLang, "en");
     }
@@ -360,7 +360,7 @@ public class AudioSession {
      * 对每个最终分片异步执行翻译任务。
      */
     private void triggerTranslation(String text) {
-        llmExecutor.submit(() -> {
+        virtualExecutor.submit(() -> {
             try {
                 log.debug("LLM translation start: translationRecordId={}", translationRecordId);
                 String result = llmService.translate(text, sourceLang, targetLang);
@@ -368,6 +368,8 @@ public class AudioSession {
                     synchronized (translationLock) {
                         translatedText.append(result).append(' ');
                     }
+                    //部分较短的句子，直接在final返回了，因此也需要给part推一份，以供前端显示使用
+                    emit(ServerMessage.quickTranslation(getAdaptiveWindow(result, this.targetLang)));
                     emit(ServerMessage.translation(result));
                     log.debug("LLM translation done: translationRecordId={}", translationRecordId);
                 }
@@ -387,7 +389,7 @@ public class AudioSession {
             log.debug("Skipping Quick Translation, previous task still running: translationRecordId={}", translationRecordId);
             return;
         }
-        llmExecutor.submit(() -> {
+        virtualExecutor.submit(() -> {
             try {
                 log.debug("LLM Quick translation start: translationRecordId={}", translationRecordId);
                 llmService.quickTranslate(fullText, translateText, sourceLang, targetLang).blockingForEach(translatedText -> {
@@ -469,7 +471,8 @@ public class AudioSession {
                 translationResultService.updateById(record);
             }
             persistVectorSnapshot(fullText, translation.trim());
-            analyseService.analyse(translation.trim(), currentUserId.toString(), translationRecordId);
+            //早期方法。废弃
+            //analyseService.analyse(translation.trim(), currentUserId.toString(), translationRecordId);
             log.info("Translation persisted on close: translationRecordId={}, userId={}",
                     translationRecordId, currentUserId);
         } catch (Exception ex) {
