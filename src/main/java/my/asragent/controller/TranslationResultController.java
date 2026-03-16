@@ -98,14 +98,14 @@ public class TranslationResultController {
     }
 
     @GetMapping("getLatesteId")
-    @Operation(summary = "获取转译结果详情", description = "根据主键获取转译结果详情")
-    public Long getLatesteId(HttpServletRequest request) {
+    @Operation(summary = "获取当前用户最近一次转译记录对应的Id", description = "根据用户请求从session获取")
+    public TranslationResult getLatesteId(HttpServletRequest request) {
         QueryWrapper queryWrapper = new QueryWrapper();
         User loginUser = userService.getLoginUser(request);
         queryWrapper.eq("user_id", loginUser.getId());
         queryWrapper.orderBy("created_at desc");
         queryWrapper.limit(1);
-        return translationResultService.getOne(queryWrapper).getId();
+        return translationResultService.getOne(queryWrapper);
     }
     /**
      * 分页查询。

@@ -33,6 +33,8 @@ public class DispAgent {
     private String translateSystemPrompt;
     @Value("classpath:/prompts/summary.st")
     private String summaryPrompt;
+    @Value("classpath:/prompts/finalSummary.st")
+    private String  finalSummaryPrompt;
     @Value("classpath:/prompts/imagePlan.st")
     private String imagePlanPrompt;
     @Value("classpath:/prompts/qa.st")
@@ -95,6 +97,18 @@ public class DispAgent {
                 .build();
     }
     /**
+     *
+     * 最终总结agent
+     */
+    @Bean("finalSummaryAgent")
+    public ReactAgent finalSummaryAgent() {
+        return ReactAgent.builder()
+                .name("finalSummaryAgent")
+                .model(analyseChatModel)
+                .systemPrompt(finalSummaryPrompt)
+                .build();
+    }
+    /**
      * 图片生成计划
      *
      */
@@ -138,4 +152,6 @@ public class DispAgent {
                 .saver(RedisSaver.builder().redisson(redissonClient).build())
                 .build();
     }
+
+
 }

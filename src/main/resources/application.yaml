@@ -10,7 +10,7 @@ spring:
       api-key: sk-355fdaeddf5743078b7d4c9efde61980
       chat:
         options:
-          model: qwen3-max-2025-09-23
+          model: deepseek-v3.1
           multi-model: false
     vectorstore:
       pgvector:
